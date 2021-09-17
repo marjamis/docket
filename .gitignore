@@ -13,3 +13,8 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+# Don't store AWS SAM CLI data
+.aws-sam
+samconfig.toml
+.env

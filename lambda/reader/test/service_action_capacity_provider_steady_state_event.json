@@ -1,0 +1,21 @@
+{
+    "version": "0",
+    "id": "b9baa007-2f33-0eb1-5760-0d02a572d81f",
+    "detail-type": "ECS Service Action",
+    "source": "aws.ecs",
+    "account": "111122223333",
+    "time": "2019-11-19T19:37:00Z",
+    "region": "us-west-2",
+    "resources": [
+        "arn:aws:ecs:us-west-2:111122223333:service/default/servicetest"
+    ],
+    "detail": {
+        "eventType": "INFO",
+        "eventName": "CAPACITY_PROVIDER_STEADY_STATE",
+        "clusterArn": "arn:aws:ecs:us-west-2:111122223333:cluster/default",
+        "capacityProviderArns": [
+            "arn:aws:ecs:us-west-2:111122223333:capacity-provider/ASG-tutorial-capacity-provider"
+        ],
+        "createdAt": "2019-11-19T19:37:00.807Z"
+    }
+}
