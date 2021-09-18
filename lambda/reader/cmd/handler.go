@@ -161,7 +161,6 @@ func formatDDBEntry(event events.CloudWatchEvent) (map[string]*dynamodb.Attribut
 		}
 
 		customEntry.EventJSON = string(eventJSON)
-
 	case "ECS Deployment State Change":
 		event := DeploymentEvent{
 			EventType:    *temp["eventType"].S,
@@ -191,6 +190,13 @@ func formatDDBEntry(event events.CloudWatchEvent) (map[string]*dynamodb.Attribut
 			}
 			event.ContainerStates = append(event.ContainerStates, n)
 		}
+
+		eventJSON, err := json.Marshal(event)
+		if err != nil {
+			return nil, err
+		}
+
+		customEntry.EventJSON = string(eventJSON)
 	}
 
 	// This converts the custom event struct data to a DDB item map
