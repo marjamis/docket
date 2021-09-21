@@ -35,37 +35,37 @@ type EventData struct {
 
 // ContainerInstanceStateChangeEvent is the important data for the event itself.
 type ContainerInstanceStateChangeEvent struct {
-	AgentConnected bool   `json:"agent-connected"`
+	AgentConnected bool   `json:"agentConnected"`
 	Status         string `json:"status"`
 }
 
 type containerState struct {
-	ARN        string `json:"arn"`
+	ARN        string `json:"containerArn"`
 	Name       string `json:"name"`
-	LastStatus string `json:"last-status"`
+	LastStatus string `json:"lastStatus"`
 }
 
 //TaskStateChangeEvent is the important data for the event itself.
 type TaskStateChangeEvent struct {
-	LastStatus      string           `json:"last-status"`
-	DesiredStatus   string           `json:"desired-status"`
-	ContainerStates []containerState `json:"container-states"`
+	LastStatus    string           `json:"lastStatus"`
+	DesiredStatus string           `json:"desiredStatus"`
+	Containers    []containerState `json:"containers"`
 }
 
 // ServiceActionEvent is the important data for the event itself.
 type ServiceActionEvent struct {
-	EventType           string   `json:"event_type"`
-	EventName           string   `json:"event-name"`
-	ClusterARN          string   `json:"cluster-arn"`
-	Reason              string   `json:"reason,omitempty"`
-	CapacityProvierARNs []string `json:"capacity-provider-arns,omitempty"`
+	EventType            string   `json:"eventType"`
+	EventName            string   `json:"eventName"`
+	ClusterARN           string   `json:"clusterArn"`
+	Reason               string   `json:"reason,omitempty"`
+	CapacityProviderARNs []string `json:"capacityProviderArns,omitempty"`
 }
 
 // DeploymentEvent is the important data for the event itself.
 type DeploymentEvent struct {
-	EventType    string `json:"event-type"`
-	EventName    string `json:"event-name"`
-	DeploymentID string `json:"deployment-id"`
+	EventType    string `json:"eventType"`
+	EventName    string `json:"eventName"`
+	DeploymentID string `json:"deploymentId"`
 	Reason       string `json:"reason"`
 }
 
@@ -151,7 +151,7 @@ func formatDDBEntry(event events.CloudWatchEvent) (map[string]*dynamodb.Attribut
 
 		if i, ok := temp["capacityProviderArns"]; ok {
 			for _, cap := range i.L {
-				event.CapacityProvierARNs = append(event.CapacityProvierARNs, *cap.S)
+				event.CapacityProviderARNs = append(event.CapacityProviderARNs, *cap.S)
 			}
 		}
 
@@ -188,7 +188,7 @@ func formatDDBEntry(event events.CloudWatchEvent) (map[string]*dynamodb.Attribut
 				Name:       *c["name"].S,
 				LastStatus: *c["lastStatus"].S,
 			}
-			event.ContainerStates = append(event.ContainerStates, n)
+			event.Containers = append(event.Containers, n)
 		}
 
 		eventJSON, err := json.Marshal(event)

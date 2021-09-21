@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"testing"
@@ -14,22 +15,59 @@ import (
 )
 
 func TestFormatDDBEntryFuzz(t *testing.T) {
-	t.Run("Checking Common Attributes", func(t *testing.T) {
-		for i := 0; i < 10000; i++ {
-			object := events.CloudWatchEvent{}
-			f := fuzz.New()
-			f.Fuzz(&object)
-			object.Detail = []byte{
-				123,
-				125,
+	f := fuzz.New().NilChance(0).Funcs(
+		func(e *events.CloudWatchEvent, c fuzz.Continue) {
+			switch c.Intn(43) {
+			case 0:
+				e.DetailType = "ECS Container Instance State Change"
+				detail := ContainerInstanceStateChangeEvent{}
+				c.Fuzz(&detail)
+				jsonDetail, err := json.Marshal(detail)
+				if err != nil {
+					fmt.Println(err)
+				}
+				e.Detail = jsonDetail
+			case 1:
+				e.DetailType = "ECS Service Action"
+				detail := ServiceActionEvent{}
+				c.Fuzz(&detail)
+				jsonDetail, err := json.Marshal(detail)
+				if err != nil {
+					fmt.Println(err)
+				}
+				e.Detail = jsonDetail
+			case 2:
+				e.DetailType = "ECS Deployment State Change"
+				detail := DeploymentEvent{}
+				c.Fuzz(&detail)
+				jsonDetail, err := json.Marshal(detail)
+				if err != nil {
+					fmt.Println(err)
+				}
+				e.Detail = jsonDetail
+			case 3:
+				e.DetailType = "ECS Task State Change"
+				detail := TaskStateChangeEvent{}
+				c.Fuzz(&detail)
+				jsonDetail, err := json.Marshal(detail)
+				if err != nil {
+					fmt.Println(err)
+				}
+				e.Detail = jsonDetail
 			}
+		},
+	)
 
-			data, err := formatDDBEntry(object)
-			if err != nil {
-				fmt.Println(err)
-			}
+	for i := 0; i < 10000; i++ {
+		var object events.CloudWatchEvent
+		f.Fuzz(&object)
 
-			fmt.Println(data)
+		data, err := formatDDBEntry(object)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		t.Run("Checking Common Attributes", func(t *testing.T) {
 			assert.Equal(t, object.ID, *data["id"].S)
 			assert.Equal(t, object.DetailType, *data["detail-type"].S)
 			assert.Equal(t, object.Source, *data["source"].S)
@@ -50,7 +88,84 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 			}
 			// TODO improve this check to be more "accurate"
 			assert.Greater(t, int64(epoch), time.Now().Unix())
-			//EventJSON payload / type specific
+		})
+
+		switch object.DetailType {
+		case "ECS Container Instance State Change":
+			respEventJSON := ContainerInstanceStateChangeEvent{}
+			err = json.Unmarshal([]byte(*data["event-json"].S), &respEventJSON)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			var detail ContainerInstanceStateChangeEvent
+			err := json.Unmarshal(object.Detail, &detail)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			t.Run("Checking ECS Container Instance State Change Event Data", func(t *testing.T) {
+				assert.Equal(t, detail.AgentConnected, respEventJSON.AgentConnected)
+				assert.Equal(t, detail.Status, respEventJSON.Status)
+			})
+		case "ECS Service Action":
+			respEventJSON := ServiceActionEvent{}
+			err = json.Unmarshal([]byte(*data["event-json"].S), &respEventJSON)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			var detail ServiceActionEvent
+			err := json.Unmarshal(object.Detail, &detail)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			t.Run("Checking ECS Service Action Event Data", func(t *testing.T) {
+				assert.Equal(t, detail.EventType, respEventJSON.EventType)
+				assert.Equal(t, detail.EventName, respEventJSON.EventName)
+				assert.Equal(t, detail.ClusterARN, respEventJSON.ClusterARN)
+				// TODO this is an imperfect test as sometimes the json shouldn't have either of these keys
+				assert.Equal(t, detail.Reason, respEventJSON.Reason)
+				assert.Equal(t, detail.CapacityProviderARNs, respEventJSON.CapacityProviderARNs)
+			})
+		case "ECS Deployment State Change":
+			respEventJSON := DeploymentEvent{}
+			err = json.Unmarshal([]byte(*data["event-json"].S), &respEventJSON)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			var detail DeploymentEvent
+			err := json.Unmarshal(object.Detail, &detail)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			t.Run("Checking ECS Deployment Event Data", func(t *testing.T) {
+				assert.Equal(t, detail.EventType, respEventJSON.EventType)
+				assert.Equal(t, detail.EventName, respEventJSON.EventName)
+				assert.Equal(t, detail.Reason, respEventJSON.Reason)
+				assert.Equal(t, detail.DeploymentID, respEventJSON.DeploymentID)
+			})
+		case "ECS Task State Change":
+			respEventJSON := TaskStateChangeEvent{}
+			err = json.Unmarshal([]byte(*data["event-json"].S), &respEventJSON)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			var detail TaskStateChangeEvent
+			err := json.Unmarshal(object.Detail, &detail)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			t.Run("Checking ECS Task State Event Data", func(t *testing.T) {
+				assert.Equal(t, detail.LastStatus, respEventJSON.LastStatus)
+				assert.Equal(t, detail.DesiredStatus, respEventJSON.DesiredStatus)
+				assert.Equal(t, detail.Containers, respEventJSON.Containers)
+			})
 		}
-	})
+	}
 }
