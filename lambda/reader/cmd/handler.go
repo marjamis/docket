@@ -19,18 +19,18 @@ import (
 // EventData is the output that will be stored to DDB.
 type EventData struct {
 	ID         string    `json:"id"`
-	DetailType string    `json:"detail-type"`
+	DetailType string    `json:"detailType"`
 	Source     string    `json:"source"`
 	AccountID  string    `json:"account"`
 	Time       time.Time `json:"time"`
 	Region     string    `json:"region"`
 	Resources  []string  `json:"resources"`
-	EventJSON  string    `json:"event-json"`
+	EventJSON  string    `json:"eventJson"`
 
 	// This is just a catch-all for now
 	CloudWatchEventPayload string `json:"cloudwatch-event-payload"`
 	// Used to control when the event is expired in DDB
-	EpochTTL int64 `json:"epoch-ttl"`
+	EpochTTL int64 `json:"epochTTL"`
 }
 
 // ContainerInstanceStateChangeEvent is the important data for the event itself.
@@ -106,7 +106,7 @@ func formatDDBEntry(event events.CloudWatchEvent) (map[string]*dynamodb.Attribut
 		return nil, err
 	}
 
-	customEntry := &EventData{
+	ddb_item := &EventData{
 		EpochTTL:               time.Now().AddDate(0, 0, 7).Unix(),
 		CloudWatchEventPayload: string(payload),
 		ID:                     event.ID,
@@ -118,89 +118,90 @@ func formatDDBEntry(event events.CloudWatchEvent) (map[string]*dynamodb.Attribut
 		Resources:              event.Resources,
 	}
 
+	// Using this as a temporary method to get easy struct access to the data for the detail, which is a json.RawMessage
 	t, err := dynamodbattribute.ConvertToMap(event)
 	if err != nil {
 		return nil, err
 	}
-	temp := t["detail"].M
+	detail := t["detail"].M
 
 	// Caters for the differences in the CWE that I may get for ECS and gets the details that I specifically want in the table
 	switch event.DetailType {
 	case "ECS Container Instance State Change":
-		event := ContainerInstanceStateChangeEvent{
-			AgentConnected: *temp["agentConnected"].BOOL,
-			Status:         *temp["status"].S,
+		e := ContainerInstanceStateChangeEvent{
+			AgentConnected: *detail["agentConnected"].BOOL,
+			Status:         *detail["status"].S,
 		}
 
-		eventJSON, err := json.Marshal(event)
+		eventJSON, err := json.Marshal(e)
 		if err != nil {
 			return nil, err
 		}
 
-		customEntry.EventJSON = string(eventJSON)
+		ddb_item.EventJSON = string(eventJSON)
 	case "ECS Service Action":
-		event := ServiceActionEvent{
-			EventType:  *temp["eventType"].S,
-			EventName:  *temp["eventName"].S,
-			ClusterARN: *temp["clusterArn"].S,
+		e := ServiceActionEvent{
+			EventType:  *detail["eventType"].S,
+			EventName:  *detail["eventName"].S,
+			ClusterARN: *detail["clusterArn"].S,
 		}
 
-		if i, ok := temp["reason"]; ok {
-			event.Reason = *i.S
+		if i, ok := detail["reason"]; ok {
+			e.Reason = *i.S
 		}
 
-		if i, ok := temp["capacityProviderArns"]; ok {
+		if i, ok := detail["capacityProviderArns"]; ok {
 			for _, cap := range i.L {
-				event.CapacityProviderARNs = append(event.CapacityProviderARNs, *cap.S)
+				e.CapacityProviderARNs = append(e.CapacityProviderARNs, *cap.S)
 			}
 		}
 
-		eventJSON, err := json.Marshal(event)
+		eventJSON, err := json.Marshal(e)
 		if err != nil {
 			return nil, err
 		}
 
-		customEntry.EventJSON = string(eventJSON)
+		ddb_item.EventJSON = string(eventJSON)
 	case "ECS Deployment State Change":
-		event := DeploymentEvent{
-			EventType:    *temp["eventType"].S,
-			EventName:    *temp["eventName"].S,
-			Reason:       *temp["reason"].S,
-			DeploymentID: *temp["deploymentId"].S,
+		e := DeploymentEvent{
+			EventType:    *detail["eventType"].S,
+			EventName:    *detail["eventName"].S,
+			Reason:       *detail["reason"].S,
+			DeploymentID: *detail["deploymentId"].S,
 		}
 
-		eventJSON, err := json.Marshal(event)
+		eventJSON, err := json.Marshal(e)
 		if err != nil {
 			return nil, err
 		}
 
-		customEntry.EventJSON = string(eventJSON)
+		ddb_item.EventJSON = string(eventJSON)
 	case "ECS Task State Change":
-		event := TaskStateChangeEvent{
-			LastStatus:    *temp["lastStatus"].S,
-			DesiredStatus: *temp["desiredStatus"].S,
+		e := TaskStateChangeEvent{
+			LastStatus:    *detail["lastStatus"].S,
+			DesiredStatus: *detail["desiredStatus"].S,
 		}
 
-		for _, s := range temp["containers"].L {
+		for _, s := range detail["containers"].L {
 			c := s.M
 			n := containerState{
 				ARN:        *c["containerArn"].S,
 				Name:       *c["name"].S,
 				LastStatus: *c["lastStatus"].S,
 			}
-			event.Containers = append(event.Containers, n)
+			e.Containers = append(e.Containers, n)
 		}
 
-		eventJSON, err := json.Marshal(event)
+		eventJSON, err := json.Marshal(e)
 		if err != nil {
 			return nil, err
 		}
 
-		customEntry.EventJSON = string(eventJSON)
+		ddb_item.EventJSON = string(eventJSON)
 	}
 
 	// This converts the custom event struct data to a DDB item map
-	entry, err := dynamodbattribute.ConvertToMap(*customEntry)
+	entry, err := dynamodbattribute.ConvertToMap(*ddb_item)
 	if err != nil {
 		return nil, err
 	}

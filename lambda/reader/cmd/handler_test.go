@@ -69,7 +69,7 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 
 		t.Run("Checking Common Attributes", func(t *testing.T) {
 			assert.Equal(t, object.ID, *data["id"].S)
-			assert.Equal(t, object.DetailType, *data["detail-type"].S)
+			assert.Equal(t, object.DetailType, *data["detailType"].S)
 			assert.Equal(t, object.Source, *data["source"].S)
 			assert.Equal(t, object.AccountID, *data["account"].S)
 			// RFC3339Nano is the time format used by DynamoDB Attribute
@@ -82,7 +82,7 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 			}
 			assert.Equal(t, r, data["resources"].L)
 
-			epoch, err := strconv.Atoi(*data["epoch-ttl"].N)
+			epoch, err := strconv.Atoi(*data["epochTTL"].N)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -93,7 +93,7 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 		switch object.DetailType {
 		case "ECS Container Instance State Change":
 			respEventJSON := ContainerInstanceStateChangeEvent{}
-			err = json.Unmarshal([]byte(*data["event-json"].S), &respEventJSON)
+			err = json.Unmarshal([]byte(*data["eventJson"].S), &respEventJSON)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -110,7 +110,7 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 			})
 		case "ECS Service Action":
 			respEventJSON := ServiceActionEvent{}
-			err = json.Unmarshal([]byte(*data["event-json"].S), &respEventJSON)
+			err = json.Unmarshal([]byte(*data["eventJson"].S), &respEventJSON)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -131,7 +131,7 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 			})
 		case "ECS Deployment State Change":
 			respEventJSON := DeploymentEvent{}
-			err = json.Unmarshal([]byte(*data["event-json"].S), &respEventJSON)
+			err = json.Unmarshal([]byte(*data["eventJson"].S), &respEventJSON)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -150,7 +150,7 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 			})
 		case "ECS Task State Change":
 			respEventJSON := TaskStateChangeEvent{}
-			err = json.Unmarshal([]byte(*data["event-json"].S), &respEventJSON)
+			err = json.Unmarshal([]byte(*data["eventJson"].S), &respEventJSON)
 			if err != nil {
 				fmt.Println(err)
 			}
