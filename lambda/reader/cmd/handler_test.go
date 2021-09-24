@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/marjamis/docket/lambda/reader/pkg/event"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	fuzz "github.com/google/gofuzz"
@@ -20,7 +22,7 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 			switch c.Intn(43) {
 			case 0:
 				e.DetailType = "ECS Container Instance State Change"
-				detail := ContainerInstanceStateChangeEvent{}
+				detail := event.ContainerInstanceStateChangeEvent{}
 				c.Fuzz(&detail)
 				jsonDetail, err := json.Marshal(detail)
 				if err != nil {
@@ -29,7 +31,7 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 				e.Detail = jsonDetail
 			case 1:
 				e.DetailType = "ECS Service Action"
-				detail := ServiceActionEvent{}
+				detail := event.ServiceActionEvent{}
 				c.Fuzz(&detail)
 				jsonDetail, err := json.Marshal(detail)
 				if err != nil {
@@ -38,7 +40,7 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 				e.Detail = jsonDetail
 			case 2:
 				e.DetailType = "ECS Deployment State Change"
-				detail := DeploymentEvent{}
+				detail := event.DeploymentEvent{}
 				c.Fuzz(&detail)
 				jsonDetail, err := json.Marshal(detail)
 				if err != nil {
@@ -47,7 +49,7 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 				e.Detail = jsonDetail
 			case 3:
 				e.DetailType = "ECS Task State Change"
-				detail := TaskStateChangeEvent{}
+				detail := event.TaskStateChangeEvent{}
 				c.Fuzz(&detail)
 				jsonDetail, err := json.Marshal(detail)
 				if err != nil {
@@ -92,13 +94,13 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 
 		switch object.DetailType {
 		case "ECS Container Instance State Change":
-			respEventJSON := ContainerInstanceStateChangeEvent{}
+			respEventJSON := event.ContainerInstanceStateChangeEvent{}
 			err = json.Unmarshal([]byte(*data["eventJson"].S), &respEventJSON)
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			var detail ContainerInstanceStateChangeEvent
+			var detail event.ContainerInstanceStateChangeEvent
 			err := json.Unmarshal(object.Detail, &detail)
 			if err != nil {
 				fmt.Println(err)
@@ -109,13 +111,13 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 				assert.Equal(t, detail.Status, respEventJSON.Status)
 			})
 		case "ECS Service Action":
-			respEventJSON := ServiceActionEvent{}
+			respEventJSON := event.ServiceActionEvent{}
 			err = json.Unmarshal([]byte(*data["eventJson"].S), &respEventJSON)
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			var detail ServiceActionEvent
+			var detail event.ServiceActionEvent
 			err := json.Unmarshal(object.Detail, &detail)
 			if err != nil {
 				fmt.Println(err)
@@ -130,13 +132,13 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 				assert.Equal(t, detail.CapacityProviderARNs, respEventJSON.CapacityProviderARNs)
 			})
 		case "ECS Deployment State Change":
-			respEventJSON := DeploymentEvent{}
+			respEventJSON := event.DeploymentEvent{}
 			err = json.Unmarshal([]byte(*data["eventJson"].S), &respEventJSON)
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			var detail DeploymentEvent
+			var detail event.DeploymentEvent
 			err := json.Unmarshal(object.Detail, &detail)
 			if err != nil {
 				fmt.Println(err)
@@ -149,13 +151,13 @@ func TestFormatDDBEntryFuzz(t *testing.T) {
 				assert.Equal(t, detail.DeploymentID, respEventJSON.DeploymentID)
 			})
 		case "ECS Task State Change":
-			respEventJSON := TaskStateChangeEvent{}
+			respEventJSON := event.TaskStateChangeEvent{}
 			err = json.Unmarshal([]byte(*data["eventJson"].S), &respEventJSON)
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			var detail TaskStateChangeEvent
+			var detail event.TaskStateChangeEvent
 			err := json.Unmarshal(object.Detail, &detail)
 			if err != nil {
 				fmt.Println(err)
