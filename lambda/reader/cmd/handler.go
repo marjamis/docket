@@ -28,7 +28,7 @@ type EventData struct {
 	EventJSON  string    `json:"eventJson"`
 
 	// This is just a catch-all for now
-	CloudWatchEventPayload string `json:"cloudwatch-event-payload"`
+	CloudWatchEventPayload string `json:"cloudwatchEventPayload"`
 	// Used to control when the event is expired in DDB
 	EpochTTL int64 `json:"epochTTL"`
 }

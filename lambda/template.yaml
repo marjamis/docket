@@ -26,10 +26,10 @@ Resources:
             - Effect: Allow
               Action:
                 - dynamodb:*
-              Resource: !GetAtt DDBTable.Arn
+              Resource: !GetAtt EventsDDBTable.Arn
       Environment:
         Variables:
-          DDB_TABLE: !Ref DDBTable
+          DDB_TABLE: !Ref EventsDDBTable
       Events:
         ECSEvents:
           Type: EventBridgeRule
@@ -42,7 +42,7 @@ Resources:
             RetryPolicy:
               MaximumEventAgeInSeconds: 600
               MaximumRetryAttempts: 3
-  DDBTable:
+  EventsDDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
@@ -68,9 +68,9 @@ Outputs:
   ReaderFunction:
     Description: "Reader Lambda Function ARN"
     Value: !GetAtt ReaderFunction.Arn
-  DDBTable:
-    Description: "DDBTable ARN"
-    Value: !GetAtt DDBTable.Arn
+  EventsDDBTable:
+    Description: "EventsDDBTable ARN"
+    Value: !GetAtt EventsDDBTable.Arn
   ReaderFunctionIamRole:
     Description: "Implicit IAM Role created for Reader function"
     Value: !GetAtt ReaderFunctionRole.Arn
