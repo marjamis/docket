@@ -3,4 +3,4 @@ docket provides a timeline, via a [SAM](https://github.com/aws/serverless-applic
 
 | Badges |
 | --- |
-| [![Go Report Card - ReaderFunction](https://goreportcard.com/badge/github.com/marjamis/docket/lambda/reader)](https://goreportcard.com/report/github.com/marjamis/docket/lambda/reader) |
+| [![Go Report Card](https://goreportcard.com/badge/github.com/marjamis/docket)](https://goreportcard.com/report/github.com/marjamis/docket) |
