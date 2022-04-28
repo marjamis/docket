@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
