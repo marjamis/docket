@@ -24,7 +24,7 @@ test: build ## Builds and then runs tests against the application
 dev: build ## Runs a dev version of the application
 	for i in $$(ls -1 ./reader/test/); do sam local invoke "ReaderFunction" -n ./.env --event ./reader/test/$$i; done
 
-deploy: build
+deploy: build ## Build and deploys the SAM configuration
 	sam deploy --config-file ./samconfig.toml
 
 clean: ## Cleans up any old/unneeded items

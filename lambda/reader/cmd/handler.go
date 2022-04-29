@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-xray-sdk-go/xray"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -35,7 +34,6 @@ func HandleRequest(ctx context.Context, event events.CloudWatchEvent) error {
 func ddbPutItem(item map[string]*dynamodb.AttributeValue) error {
 	// TODO move this outside of the handler in a go way
 	svc := dynamodb.New(session.New(&aws.Config{}))
-	xray.AWS(svc.Client)
 
 	_, err := svc.PutItem(&dynamodb.PutItemInput{
 		Item: item,
@@ -55,7 +53,7 @@ func formatDDBEntry(cwe events.CloudWatchEvent) (map[string]*dynamodb.AttributeV
 		return nil, err
 	}
 
-	ddb_item := &event.EventData{
+	ddbItem := &event.EventData{
 		EpochTTL:               time.Now().AddDate(0, 0, 7).Unix(),
 		CloudWatchEventPayload: string(payload),
 		ID:                     cwe.ID,
@@ -87,7 +85,7 @@ func formatDDBEntry(cwe events.CloudWatchEvent) (map[string]*dynamodb.AttributeV
 			return nil, err
 		}
 
-		ddb_item.EventJSON = string(eventJSON)
+		ddbItem.EventJSON = string(eventJSON)
 	case "ECS Service Action":
 		e := event.ServiceActionEvent{
 			EventType:  *detail["eventType"].S,
@@ -110,7 +108,7 @@ func formatDDBEntry(cwe events.CloudWatchEvent) (map[string]*dynamodb.AttributeV
 			return nil, err
 		}
 
-		ddb_item.EventJSON = string(eventJSON)
+		ddbItem.EventJSON = string(eventJSON)
 	case "ECS Deployment State Change":
 		e := event.DeploymentEvent{
 			EventType:    *detail["eventType"].S,
@@ -124,7 +122,7 @@ func formatDDBEntry(cwe events.CloudWatchEvent) (map[string]*dynamodb.AttributeV
 			return nil, err
 		}
 
-		ddb_item.EventJSON = string(eventJSON)
+		ddbItem.EventJSON = string(eventJSON)
 	case "ECS Task State Change":
 		e := event.TaskStateChangeEvent{
 			LastStatus:    *detail["lastStatus"].S,
@@ -146,11 +144,11 @@ func formatDDBEntry(cwe events.CloudWatchEvent) (map[string]*dynamodb.AttributeV
 			return nil, err
 		}
 
-		ddb_item.EventJSON = string(eventJSON)
+		ddbItem.EventJSON = string(eventJSON)
 	}
 
 	// This converts the custom event struct data to a DDB item map
-	entry, err := dynamodbattribute.ConvertToMap(*ddb_item)
+	entry, err := dynamodbattribute.ConvertToMap(*ddbItem)
 	if err != nil {
 		return nil, err
 	}

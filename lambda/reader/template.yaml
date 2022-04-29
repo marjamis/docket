@@ -1,42 +1,46 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  reader
+Description: 'reader
 
-  Takes CloudWatch Events (CWE's) related to ECS and pushes them into a DDB table for future analysis.
+  Takes CloudWatch Events (CWE''s) related to ECS and pushes them into a DDB table
+  for future analysis.
 
+  '
 Globals:
   Function:
     Timeout: 3
   Api:
     TracingEnabled: true
-
 Resources:
   ReaderFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: reader/
+      CodeUri: .
       Handler: main
       Runtime: go1.x
       Tracing: Active
       Timeout: 5
       Policies:
-        - Version: '2012-10-17' 
-          Statement:
-            - Effect: Allow
-              Action:
-                - dynamodb:*
-              Resource: !GetAtt EventsDDBTable.Arn
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - dynamodb:*
+          Resource:
+            Fn::GetAtt:
+            - EventsDDBTable
+            - Arn
       Environment:
         Variables:
-          DDB_TABLE: !Ref EventsDDBTable
+          DDB_TABLE:
+            Ref: EventsDDBTable
       Events:
         ECSEvents:
           Type: EventBridgeRule
           Properties:
             Pattern:
               source:
-                - aws.ecs
+              - aws.ecs
             DeadLetterConfig:
               Type: SQS
             RetryPolicy:
@@ -46,15 +50,15 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-        - AttributeName: id
-          AttributeType: S
-        - AttributeName: time
-          AttributeType: S
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: time
+        AttributeType: S
       KeySchema:
-        - AttributeName: id
-          KeyType: HASH
-        - AttributeName: time
-          KeyType: RANGE
+      - AttributeName: id
+        KeyType: HASH
+      - AttributeName: time
+        KeyType: RANGE
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       ProvisionedThroughput:
@@ -63,14 +67,22 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: epochTTL
         Enabled: true
-
 Outputs:
   ReaderFunction:
-    Description: "Reader Lambda Function ARN"
-    Value: !GetAtt ReaderFunction.Arn
+    Description: Reader Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - ReaderFunction
+      - Arn
   EventsDDBTable:
-    Description: "EventsDDBTable ARN"
-    Value: !GetAtt EventsDDBTable.Arn
+    Description: EventsDDBTable ARN
+    Value:
+      Fn::GetAtt:
+      - EventsDDBTable
+      - Arn
   ReaderFunctionIamRole:
-    Description: "Implicit IAM Role created for Reader function"
-    Value: !GetAtt ReaderFunctionRole.Arn
+    Description: Implicit IAM Role created for Reader function
+    Value:
+      Fn::GetAtt:
+      - ReaderFunctionRole
+      - Arn
