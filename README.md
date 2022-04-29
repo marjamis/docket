@@ -1,4 +1,5 @@
 # docket
+
 docket provides a timeline, via a [SAM](https://github.com/aws/serverless-application-model/) application and a CLI, to return the ordered events of a specified ECS Cluster, Service or Task for historical review.
 
 | Badges |

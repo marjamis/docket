@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-xray-sdk-go/xray"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -35,7 +34,6 @@ func HandleRequest(ctx context.Context, event events.CloudWatchEvent) error {
 func ddbPutItem(item map[string]*dynamodb.AttributeValue) error {
 	// TODO move this outside of the handler in a go way
 	svc := dynamodb.New(session.New(&aws.Config{}))
-	xray.AWS(svc.Client)
 
 	_, err := svc.PutItem(&dynamodb.PutItemInput{
 		Item: item,

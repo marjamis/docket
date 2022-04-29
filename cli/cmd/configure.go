@@ -43,7 +43,7 @@ var configureCmd = &cobra.Command{
 			Resources: Resources{
 				DynamoDB: DynamoDBConfiguration{
 					Region:    "ap-southeast-2",
-					TableName: "docket-EventsDDBTable-1TP5IEPWXBI0L",
+					TableName: "docket",
 				}},
 		}
 
