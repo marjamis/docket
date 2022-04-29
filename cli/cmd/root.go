@@ -30,6 +30,8 @@ var rootCmd = &cobra.Command{
 	Use:   "docket",
 	Short: "Pull stored CloudWatch Events for ECS for quick reference ECS timelines/activities",
 	Run: func(cmd *cobra.Command, args []string) {
+		setLogLevel(viper.GetString("log-level"))
+
 		printOutput(scan())
 	},
 }
@@ -56,7 +58,7 @@ func generateQuery() *dynamodb.ScanInput {
 		},
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":v0": {
-				S: aws.String(viper.GetString("startFrom")),
+				S: aws.String(viper.GetString("start-from")),
 			},
 		},
 	}
@@ -95,13 +97,27 @@ func Execute() {
 	}
 }
 
+func setLogLevel(level string) {
+	switch viper.GetString("log-level") {
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	case "info":
+	default:
+		log.SetLevel(log.InfoLevel)
+	}
+}
+
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.docket.yaml)")
 
-	var flag string
-	rootCmd.Flags().StringVarP(&flag, "startFrom", "s", time.Now().UTC().Format("2006-01-02"), "Time from which to start the docker timeline")
-	viper.BindPFlag("startFrom", rootCmd.Flags().Lookup("startFrom"))
+	var logLevel string
+	rootCmd.Flags().StringVarP(&logLevel, "log-level", "l", "info", "log level to use through the applications execution (currently allowed values are (info and debug)")
+	viper.BindPFlag("log-level", rootCmd.Flags().Lookup("log-level"))
+
+	var startFrom string
+	rootCmd.Flags().StringVarP(&startFrom, "start-from", "s", time.Now().UTC().Format("2006-01-02"), "Time from which to start the docker timeline")
+	viper.BindPFlag("start-from", rootCmd.Flags().Lookup("start-from"))
 }
 
 // initConfig reads in config file and ENV variables if set.
