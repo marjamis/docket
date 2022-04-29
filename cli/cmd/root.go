@@ -6,7 +6,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/marjamis/docket/cli/internal/pkg/formatting"
 	"github.com/marjamis/docket/lambda/reader/pkg/event"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -32,7 +31,7 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		setLogLevel(viper.GetString("log-level"))
 
-		printOutput(scan())
+		printScanOutput(scan())
 	},
 }
 
@@ -68,8 +67,7 @@ func generateQuery() *dynamodb.ScanInput {
 	return input
 }
 
-// TODO fix the entire output to look nicer and fix the formatters
-func printOutput(scanOutput *dynamodb.ScanOutput) {
+func printScanOutput(scanOutput *dynamodb.ScanOutput) {
 	if *scanOutput.Count == int64(0) {
 		log.Printf("No data in table. Exiting...")
 		return
@@ -79,13 +77,12 @@ func printOutput(scanOutput *dynamodb.ScanOutput) {
 
 	dynamodbattribute.UnmarshalListOfMaps(scanOutput.Items, &events)
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', tabwriter.DiscardEmptyColumns)
-	fmt.Fprint(w, "Number\tDate\tEvent Type\tARN\tDetail Type\tEvent Id\n")
+	writer := tabwriter.NewWriter(os.Stdout, 0, 4, 10, ' ', tabwriter.DiscardEmptyColumns)
+	defer writer.Flush()
 
-	for i, v := range events {
-		fmt.Fprintf(w, "%d\t%s\n", i, formatting.FormatEventData(&v))
+	for _, event := range events {
+		fmt.Fprintf(writer, "%s\t%s\t%s\t%s\t%s\n", event.Time, event.ID, event.DetailType, event.Resources, event.EventJSON)
 	}
-	w.Flush()
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
